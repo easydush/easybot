@@ -29,22 +29,7 @@ public class DiscordConfig {
 
     @Bean
     public JDA jda() throws LoginException {
-//
-//        Collection<GatewayIntent> intents = new ArrayList<>();
-//        intents.add(GatewayIntent.GUILD_MEMBERS);
-//        intents.add(GatewayIntent.GUILD_EMOJIS);
-//        intents.add(GatewayIntent.GUILD_BANS);
-//        intents.add(GatewayIntent.GUILD_INVITES);
-//        intents.add(GatewayIntent.GUILD_VOICE_STATES);
-//        intents.add(GatewayIntent.GUILD_PRESENCES);
-//        intents.add(GatewayIntent.GUILD_MESSAGES);
-//        intents.add(GatewayIntent.GUILD_MESSAGE_REACTIONS);
-//        intents.add(GatewayIntent.GUILD_MESSAGE_TYPING);
-//        intents.add(GatewayIntent.DIRECT_MESSAGES);
-//        intents.add(GatewayIntent.DIRECT_MESSAGE_REACTIONS);
-//        intents.add(GatewayIntent.DIRECT_MESSAGE_TYPING);
-
-        JDABuilder builder = JDABuilder.createDefault("NzA5MDU3ODgxOTE5NDU1MjYz.XrkCpg.gUNhg8634h1CpQZj4eb4fFjE5OA");
+        JDABuilder builder = JDABuilder.createDefault("NzA5MDU3ODgxOTE5NDU1MjYz.Xs6GDg.YgCgFy27HmooNpvha0AdOG8M0Ug");
           builder.setActivity(Activity.playing("Танюшины нервы"));
         builder.addEventListeners(context.getBean(MessageReceived.class));
         log.info("Bot has been started");

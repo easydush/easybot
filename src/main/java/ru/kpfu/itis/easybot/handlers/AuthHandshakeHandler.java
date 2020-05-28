@@ -1,6 +1,7 @@
 package ru.kpfu.itis.easybot.handlers;
 
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -15,6 +16,7 @@ import org.springframework.web.util.WebUtils;
 import java.util.Map;
 
 @Component
+@Profile("web")
 public class AuthHandshakeHandler implements HandshakeHandler {
 
     private DefaultHandshakeHandler defaultHandshakeHandler = new DefaultHandshakeHandler();

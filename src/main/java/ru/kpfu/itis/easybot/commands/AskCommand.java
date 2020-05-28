@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import ru.kpfu.itis.easybot.dto.PersonDto;
 import ru.kpfu.itis.easybot.model.Game;
+import ru.kpfu.itis.easybot.model.Message;
 import ru.kpfu.itis.easybot.model.Person;
 import ru.kpfu.itis.easybot.model.Question;
 import ru.kpfu.itis.easybot.repository.AnswerRepository;
@@ -21,11 +22,12 @@ import ru.kpfu.itis.easybot.service.PersonServiceImpl;
 import ru.kpfu.itis.easybot.utils.IdDecoder;
 import ru.kpfu.itis.easybot.utils.ValidationUtils;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 
 @Component
-@Profile("dis")
+@Profile({"dis", "web"})
 public class AskCommand extends Command {
     private final ValidationUtils validationUtils;
     private final IdDecoder decoder;
@@ -43,22 +45,19 @@ public class AskCommand extends Command {
     }
 
     @Override
-    public void execute(GenericEvent event) {
-        MessageReceivedEvent messageReceivedEvent = (MessageReceivedEvent) event;
+    public void execute(Message message, ru.kpfu.itis.easybot.model.User author) throws IOException {
+        String command = message.getText();
         try {
-            validationUtils.validate(messageReceivedEvent.getMessage().getContentRaw(), 4);
+            validationUtils.validate(command, 4);
         } catch (IllegalArgumentException e) {
-            messageReceivedEvent.getChannel().sendMessage("Can't find command " + this.header().name() + "with allowed arguments").queue();
+            super.sendMessages("Can't find command " + this.header().name() + "with allowed arguments");
         }
 
         new Thread(() ->
         {
 
-            MessageChannel channel = messageReceivedEvent.getTextChannel();
-            String message = ((MessageReceivedEvent) event).getMessage().getContentRaw();
-            String gameId = decoder.decode(message.split(" ")[2]);
-            String question = message.split(" ")[3];
-            User guess_user = ((MessageReceivedEvent) event).getAuthor();
+            String gameId = decoder.decode(command.split(" ")[2]);
+            String question = command.split(" ")[3];
             if (gameRepository.findById(Long.valueOf(gameId)).isPresent()) {
                 Game game = gameRepository.findById(Long.valueOf(gameId)).get();
                 Person person = game.getPerson();
@@ -66,16 +65,32 @@ public class AskCommand extends Command {
                     Question asked = questionRepository.findByTitle(question).get();
                     if (answerRepository.findByPersonAndQuestion(person, asked).isPresent()) {
                         System.out.println(answerRepository.findByPersonAndQuestion(person, asked).get());
-                        messageReceivedEvent.getChannel().sendMessage(answerRepository.findByPersonAndQuestion(person, asked).get().getIsTrue() + ", " + guess_user.getAsMention()).queue();
+                        try {
+                            super.sendMessages(answerRepository.findByPersonAndQuestion(person, asked).get().getIsTrue() + ", " + message.getFrom().getName());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
                     } else {
-                        messageReceivedEvent.getChannel().sendMessage("I don't know. Try another question, " + guess_user.getAsMention()).queue();
+                        try {
+                            super.sendMessages("I don't know. Try another question, " + message.getFrom().getName());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
 
                     }
                 } else {
-                    messageReceivedEvent.getChannel().sendMessage("Question is not found, " + guess_user.getAsMention()).queue();
+                    try {
+                        super.sendMessages("Question is not found, " + message.getFrom().getName());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                 }
             } else {
-                messageReceivedEvent.getChannel().sendMessage("Game is not found, " + guess_user.getAsMention()).queue();
+                try {
+                    super.sendMessages("Game is not found, " + message.getFrom().getName());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }).start();
     }

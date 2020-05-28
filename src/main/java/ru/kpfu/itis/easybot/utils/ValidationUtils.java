@@ -4,7 +4,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("dis")
+@Profile({"dis","web"})
 public class ValidationUtils {
 
     public void validate(String content, int length) throws IllegalArgumentException {

@@ -1,27 +1,23 @@
 package ru.kpfu.itis.easybot;
 
-import lombok.var;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import ru.kpfu.itis.easybot.commands.Command;
+import ru.kpfu.itis.easybot.model.Message;
+import ru.kpfu.itis.easybot.model.User;
 
+import java.io.IOException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 @Component
-@Profile("dis")
+@Profile({"dis", "web"})
 public class MessageResolver {
 
     private final ApplicationContext context;
-
-    public Map<String, Command> getCommandMap() {
-        return commandMap;
-    }
-
     private final Map<String, Command> commandMap = new HashMap<>();
     private final JDA jda;
 
@@ -32,36 +28,29 @@ public class MessageResolver {
     }
 
     private void initializeCommands() {
-        var commands = context.getBeansOfType(Command.class).values();
+        Collection<Command> commands = context.getBeansOfType(Command.class).values();
         for (Command comma : commands
         ) {
             addCommand(comma);
-            System.out.println(comma
-            );
         }
+
     }
 
     private void addCommand(Command command) {
         commandMap.put(command.header().name(), command);
-        System.out.println("put to the map"+command.header().name() + ' ' + command);
     }
 
-    public void executeCommand(MessageReceivedEvent event) {
 
-        Message message = event.getMessage();
+    public void executeCommand(Message message, User author) throws IOException {
+        String commandText = message.getText().split(" ")[0];
+        Command command = commandMap.get(commandText);
 
-        String commandText = message.getContentRaw();
-        System.out.println("typed:"+commandText);
-        Command command = commandMap.get(commandText.split(" ")[0]);
-
-
-        if (message.getMentionedMembers().contains(event.getGuild().getSelfMember()) ||
-                message.getContentRaw().contains("709057881919455263")) {
+        //if (message.getText().contains("709057881919455263") || message.getText().contains("@EasyBot")) {
             if (command == null) {
                 throw new IllegalArgumentException("Unknown header " + commandText);
             }
             System.out.println("executing " + command);
-            command.execute(event);
-        }
+            command.execute(message, author);
+        //}
     }
 }

@@ -6,8 +6,7 @@ import ru.kpfu.itis.easybot.model.User;
 
 import java.util.Optional;
 
-@Repository
-//@Profile({"dis","sock"})
+
 public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> getUserByName(String name);

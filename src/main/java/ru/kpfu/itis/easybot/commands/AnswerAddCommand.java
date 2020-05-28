@@ -8,15 +8,18 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import ru.kpfu.itis.easybot.dto.AnswerDto;
-import ru.kpfu.itis.easybot.dto.PersonDto;
+import ru.kpfu.itis.easybot.model.Message;
 import ru.kpfu.itis.easybot.model.Person;
+import ru.kpfu.itis.easybot.model.User;
 import ru.kpfu.itis.easybot.repository.PersonRepository;
 import ru.kpfu.itis.easybot.service.AnswerServiceImpl;
 import ru.kpfu.itis.easybot.service.PersonServiceImpl;
 import ru.kpfu.itis.easybot.utils.ValidationUtils;
 
+import java.io.IOException;
+
 @Component
-@Profile("dis")
+@Profile({"dis", "web"})
 public class AnswerAddCommand extends Command {
     private final ValidationUtils validationUtils;
     @Autowired
@@ -29,27 +32,32 @@ public class AnswerAddCommand extends Command {
     }
 
     @Override
-    public void execute(GenericEvent event) {
-
-        MessageReceivedEvent messageReceivedEvent = (MessageReceivedEvent) event;
+    public void execute(Message message, User author) throws IOException {
+        String command = message.getText();
         try {
-            validationUtils.validate(messageReceivedEvent.getMessage().getContentRaw(), 5);
+            validationUtils.validate(command, 5);
         } catch (IllegalArgumentException e) {
-            messageReceivedEvent.getChannel().sendMessage("Can't find command " + this.header().name() + "with allowed arguments").queue();
+            super.sendMessages("Can't find command " + this.header().name() + "with allowed arguments");
         }
 
         new Thread(() ->
         {
-            MessageChannel channel = messageReceivedEvent.getTextChannel();
-            String message = ((MessageReceivedEvent) event).getMessage().getContentRaw();
-            String name = message.split(" ")[2];
-            String question = message.split(" ")[3];
-            String answer = message.split(" ")[4];
+            String name = command.split(" ")[2];
+            String question = command.split(" ")[3];
+            String answer = command.split(" ")[4];
             if (personRepository.getPersonByName(name).isPresent()) {
                 answerService.addAnswer(new AnswerDto((long) 0, name, question, answer.toLowerCase().equals("true")));
-                channel.sendMessage("Answer " + answer + " was successfully added to " + name).queue();
+                try {
+                    super.sendMessages("Answer " + answer + " was successfully added to " + name);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             } else {
-                channel.sendMessage("Person " + name + " hasn't found.").queue();
+                try {
+                    super.sendMessages("Person " + name + " hasn't found.");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }).start();
     }

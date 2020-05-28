@@ -8,12 +8,16 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import ru.kpfu.itis.easybot.dto.PersonDto;
+import ru.kpfu.itis.easybot.model.Message;
 import ru.kpfu.itis.easybot.model.Person;
+import ru.kpfu.itis.easybot.model.User;
 import ru.kpfu.itis.easybot.service.PersonServiceImpl;
 import ru.kpfu.itis.easybot.utils.ValidationUtils;
 
+import java.io.IOException;
+
 @Component
-@Profile("dis")
+@Profile({"dis","web"})
 public class PersonAddCommand extends Command {
     private final ValidationUtils validationUtils;
     @Autowired
@@ -24,23 +28,24 @@ public class PersonAddCommand extends Command {
     }
 
     @Override
-    public void execute(GenericEvent event) {
-
-        MessageReceivedEvent messageReceivedEvent = (MessageReceivedEvent) event;
+    public void execute(Message message, User author) throws IOException {
+        String command = message.getText();
         try {
-            validationUtils.validate(messageReceivedEvent.getMessage().getContentRaw(), 4);
+            validationUtils.validate(command, 4);
         } catch (IllegalArgumentException e) {
-            messageReceivedEvent.getChannel().sendMessage("Can't find command " + this.header().name() + "with allowed arguments").queue();
+            super.sendMessages("Can't find command " + this.header().name() + "with allowed arguments");
         }
 
         new Thread(() ->
         {
-            MessageChannel channel = messageReceivedEvent.getTextChannel();
-            String message = ((MessageReceivedEvent) event).getMessage().getContentRaw();
-            String name = message.split(" ")[2];
-            String image = message.split(" ")[3];
+            String name = command.split(" ")[2];
+            String image = command.split(" ")[3];
             personService.addPerson(new PersonDto(0, name, image, null));
-            channel.sendMessage("Person " + name + " was successfully added.").queue();
+            try {
+                super.sendMessages("Person " + name + " was successfully added.");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }).start();
     }
 
